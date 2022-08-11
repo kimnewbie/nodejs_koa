@@ -55,10 +55,14 @@ export const list = async ctx => {
             .sort({ _id: -1 }) // 내림차순 오름차순은 _id : 1
             .limit(10) // 10개만 보이게
             .skip((page - 1) * 10) // 페이지 처리 posts?page=2
+            .lean() // 길이 제한을 위한
             .exec();
         const postCount = await Post.countDocuments().exec();
         ctx.set('Last-Page', Math.ceil(postCount / 10)); // 마지막 페이지 알려주기
-        ctx.body = posts;
+        ctx.body = posts.map(post => ({
+            ...post,
+            body: post.body.length < 200 ? post.body : `${post.body.slice(0, 200)}...`
+        }))
     } catch (e) {
         ctx.throw(500, e);
     }
