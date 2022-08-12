@@ -33,6 +33,7 @@ export const write = async ctx => {
         title,
         body,
         tags,
+        user: ctx.state.user, // 포스트 작성 시 사용자 정보 넣기
     });
     try {
         await post.save();
