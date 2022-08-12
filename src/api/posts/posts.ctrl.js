@@ -67,6 +67,9 @@ export const write = async ctx => {
     }
 };
 
+/*
+    GET /api/posts?username=&tag=&page=
+*/
 export const list = async ctx => {
     const page = parseInt(ctx.query.page || '1', 10);
 
@@ -75,14 +78,23 @@ export const list = async ctx => {
         return;
     }
 
+    // query는 문자열이기 때문에 숫자로 변환해 주어야 한다.
+    // 값이 주어지지 않았다면 1을 기본으로 사용합니다.
+    const { tag, username } = ctx.query;
+    // tag, username 값이 유효하면 객체 안에 넣고, 그렇지 않으면 넣지 않음
+    const query = {
+        ...(username ? { 'user.username': username } : {}),
+        ...(tag ? { tag: tag } : {}),
+    };
+
     try {
-        const posts = await Post.find()
+        const posts = await Post.find(query)
             .sort({ _id: -1 }) // 내림차순 오름차순은 _id : 1
             .limit(10) // 10개만 보이게
             .skip((page - 1) * 10) // 페이지 처리 posts?page=2
             .lean() // 길이 제한을 위한
             .exec();
-        const postCount = await Post.countDocuments().exec();
+        const postCount = await Post.countDocuments(query).exec();
         ctx.set('Last-Page', Math.ceil(postCount / 10)); // 마지막 페이지 알려주기
         ctx.body = posts.map(post => ({
             ...post,
